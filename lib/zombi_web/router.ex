@@ -25,6 +25,7 @@ defmodule ZombiWeb.Router do
     live "/", ServerLive
     live "/resources", ResourcesLive
     live "/mods", ModsLive
+    live "/logs", LogsLive
   end
 
   # Other scopes may use custom stacks.
