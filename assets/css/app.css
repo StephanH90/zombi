@@ -151,7 +151,8 @@
 
 body {
   font-family: var(--font-body);
-  font-size: 1.05rem;
+  font-size: 1.25rem;
+  line-height: 1.6;
   letter-spacing: 0.01em;
   /* Dark vignette closing in from the edges for a tense, low-light feel */
   background-image: radial-gradient(ellipse at 50% 35%, transparent 50%, rgba(0, 0, 0, 0.6) 100%);
