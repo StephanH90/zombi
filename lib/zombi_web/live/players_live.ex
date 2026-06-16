@@ -58,7 +58,7 @@ defmodule ZombiWeb.PlayersLive do
                   <th class="text-right">Hours</th>
                   <th class="text-right">Health</th>
                   <th>Last seen</th>
-                  <th class="w-52">Kills/min</th>
+                  <th class="w-96">Kills/min</th>
                 </tr>
               </thead>
               <tbody>
@@ -128,7 +128,7 @@ defmodule ZombiWeb.PlayersLive do
 
   defp bars(assigns) do
     ~H"""
-    <svg viewBox="0 0 100 36" preserveAspectRatio="none" class={["w-32 h-9", @class]} aria-hidden="true">
+    <svg viewBox="0 0 100 36" preserveAspectRatio="none" class={["w-72 h-24", @class]} aria-hidden="true">
       <rect
         :for={r <- bar_rects(@values)}
         x={r.x}

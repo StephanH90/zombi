@@ -11,7 +11,7 @@ defmodule Zombi.StatsIngester do
   # Upsert current stats + join/leave events frequently; take history snapshots
   # (for graphs) much less often so the DB doesn't bloat.
   @interval_ms 5_000
-  @snapshot_every_ms 60_000
+  @snapshot_every_ms 20_000
 
   def start_link(_opts), do: GenServer.start_link(__MODULE__, nil, name: __MODULE__)
 
