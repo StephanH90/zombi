@@ -17,6 +17,12 @@ defmodule ZombiWeb.LogsLive do
     {:noreply, stream_insert(socket, :logs, entry, limit: -500)}
   end
 
+  # Color by the level prefix PZ uses ("LOG  :", "WARN :", "ERROR:").
+  defp level_class("WARN" <> _), do: "text-warning"
+  defp level_class("ERROR" <> _), do: "text-error"
+  defp level_class("LOG" <> _), do: "text-success"
+  defp level_class(_), do: "text-base-content/70"
+
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash}>
@@ -30,9 +36,11 @@ defmodule ZombiWeb.LogsLive do
           id="log-box"
           phx-update="stream"
           phx-hook=".AutoScroll"
-          class="bg-base-300 rounded-box p-3 h-[65vh] overflow-y-auto font-mono text-xs leading-relaxed whitespace-pre-wrap break-words"
+          class="pz-console bg-base-300 rounded-box p-3 h-[65vh] overflow-y-auto text-xs leading-relaxed whitespace-pre-wrap break-words"
         >
-          <div :for={{dom_id, line} <- @streams.logs} id={dom_id}>{line.text}</div>
+          <div :for={{dom_id, line} <- @streams.logs} id={dom_id} class={level_class(line.text)}>
+            {line.text}
+          </div>
         </div>
       </div>
       <script :type={Phoenix.LiveView.ColocatedHook} name=".AutoScroll">

@@ -16,6 +16,7 @@ defmodule Zombi.GameStats do
   end
 
   defp path do
-    Path.join(Application.fetch_env!(:zombi, :compose_dir), "server-data/zombi-stats.json")
+    # getFileWriter in the mod writes into the Zomboid data dir's Lua/ folder.
+    Path.join(Application.fetch_env!(:zombi, :compose_dir), "server-data/Lua/zombi-stats.json")
   end
 end

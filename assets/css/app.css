@@ -183,6 +183,11 @@ h3 {
   color: oklch(70% 0.13 30);
 }
 
+/* Monospaced console for the logs tab (unlayered so it wins over the body font) */
+.pz-console {
+  font-family: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+}
+
 /* Hazard stripe accent used under the wordmark */
 .pz-hazard {
   height: 4px;
