@@ -35,20 +35,15 @@ defmodule ZombiWeb.Layouts do
 
   def app(assigns) do
     ~H"""
-    <header class="navbar px-4 sm:px-6 lg:px-8">
-      <div class="flex-1">
-        <a href="/" class="flex-1 flex w-fit items-center gap-2">
-          <img src={~p"/images/logo.svg"} width="36" />
-          <span class="text-sm font-semibold">v{Application.spec(:phoenix, :vsn)}</span>
+    <header class="bg-base-200/60 border-b-2 border-base-300">
+      <div class="px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+        <a href="/" class="flex items-baseline gap-2">
+          <span class="pz-wordmark text-2xl text-primary">Zomboid</span>
+          <span class="pz-wordmark text-2xl text-base-content/80">Control</span>
         </a>
+        <span class="pz-tagline text-xs hidden sm:block">This is how you survive.</span>
       </div>
-      <div class="flex-none">
-        <ul class="flex flex-column px-1 space-x-4 items-center">
-          <li>
-            <.theme_toggle />
-          </li>
-        </ul>
-      </div>
+      <div class="pz-hazard"></div>
     </header>
 
     <main class="px-4 py-20 sm:px-6 lg:px-8">
