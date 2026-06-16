@@ -8,6 +8,11 @@ defmodule ZombiWeb.Router do
     plug :put_root_layout, html: {ZombiWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
+    plug :basic_auth
+  end
+
+  defp basic_auth(conn, _opts) do
+    Plug.BasicAuth.basic_auth(conn, Application.fetch_env!(:zombi, :basic_auth))
   end
 
   pipeline :api do
@@ -17,7 +22,7 @@ defmodule ZombiWeb.Router do
   scope "/", ZombiWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+    live "/", ServerLive
   end
 
   # Other scopes may use custom stacks.

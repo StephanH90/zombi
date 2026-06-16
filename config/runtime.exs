@@ -22,6 +22,14 @@ end
 
 config :zombi, ZombiWeb.Endpoint, http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
+# Basic auth credentials and the Project Zomboid docker compose directory.
+# Set AUTH_PASSWORD and PZ_COMPOSE_DIR in the gameserver environment.
+config :zombi, :basic_auth,
+  username: System.get_env("AUTH_USERNAME", "admin"),
+  password: System.get_env("AUTH_PASSWORD", "changeme")
+
+config :zombi, :compose_dir, System.get_env("PZ_COMPOSE_DIR", ".")
+
 if config_env() == :prod do
   database_path =
     System.get_env("DATABASE_PATH") ||
