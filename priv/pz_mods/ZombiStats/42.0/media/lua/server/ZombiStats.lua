@@ -9,7 +9,7 @@
 --
 -- Note: "zombies" is the loaded-chunk count, not a world-wide total.
 
-local INTERVAL_MS = 5000
+local INTERVAL_MS = 1000
 local STATS_FILE = "zombi-stats.json"
 local EVENTS_FILE = "zombi-events.json"
 
