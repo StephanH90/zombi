@@ -4,13 +4,17 @@ defmodule ZombiWeb.ServerLive do
   @player_refresh_ms 1_000
 
   def mount(_params, _session, socket) do
-    {:ok,
-     socket
-     |> assign(:restarting?, false)
-     |> assign(:mods, :loading)
-     |> assign(:players, :loading)
-     |> check_mods()
-     |> check_players()}
+    socket =
+      socket
+      |> assign(:restarting?, false)
+      |> assign(:mods, :loading)
+      |> assign(:players, :loading)
+
+    # Only do the external RCON/Steam/file work for real (connected) sessions,
+    # not on every static HTTP render.
+    socket = if connected?(socket), do: socket |> check_mods() |> check_players(), else: socket
+
+    {:ok, socket}
   end
 
   def handle_event("restart", _params, socket) do
