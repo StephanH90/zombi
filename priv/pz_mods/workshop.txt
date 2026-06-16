@@ -1,0 +1,6 @@
+version=1
+id=
+title=Zombi Stats Exporter
+description=Server-side stats exporter for the Zombi control panel. Writes the online players (kills, hours survived, health) and loaded-zombie count to a file the panel reads, and logs deaths. Adds no client content — it just needs to be subscribed so the dedicated server can require it.
+tags=Misc
+visibility=public
