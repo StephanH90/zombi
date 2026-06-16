@@ -40,6 +40,41 @@ defmodule Zombi.Workshop do
     end
   end
 
+  @doc """
+  Returns `{:ok, mods}` listing every subscribed mod with its installed and
+  latest Steam versions, sorted by title. Each entry:
+  `%{id, title, installed_at, latest_at, up_to_date?}` (datetimes are nil when
+  unknown).
+  """
+  def all_mods do
+    with {:ok, ids} <- subscribed_ids(),
+         {:ok, local} <- local_versions(),
+         {:ok, remote} <- remote_details(ids) do
+      mods =
+        Enum.map(ids, fn id ->
+          details = remote[id]
+          installed = Map.get(local, id, 0)
+          latest = (details && details.time_updated) || 0
+
+          %{
+            id: id,
+            title: (details && details.title) || id,
+            installed_at: unix_to_datetime(installed),
+            latest_at: unix_to_datetime(latest),
+            up_to_date?: latest <= installed
+          }
+        end)
+
+      {:ok, Enum.sort_by(mods, &String.downcase(&1.title))}
+    end
+  end
+
+  defp unix_to_datetime(0), do: nil
+  defp unix_to_datetime(ts), do: DateTime.from_unix!(ts)
+
+  @doc "Steam Workshop page URL for a published file id."
+  def workshop_url(id), do: "https://steamcommunity.com/sharedfiles/filedetails/?id=#{id}"
+
   @doc "Workshop IDs the active server config loads (the `WorkshopItems=` line)."
   def subscribed_ids do
     case File.read(server_ini_path()) do

@@ -30,6 +30,7 @@ config :zombi, :basic_auth,
 
 config :zombi, :compose_dir, System.get_env("PZ_COMPOSE_DIR", ".")
 config :zombi, :pz_server_name, System.get_env("PZ_SERVER_NAME", "servertest")
+config :zombi, :pz_container, System.get_env("PZ_CONTAINER", "projectzomboid")
 
 config :zombi, :rcon,
   host: System.get_env("RCON_HOST", "127.0.0.1"),
@@ -64,8 +65,18 @@ if config_env() == :prod do
 
   config :zombi, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
+  # Websocket origin allowlist. Defaults to the configured host; set
+  # PHX_ALLOWED_ORIGINS to a comma-separated list to allow several (e.g. both a
+  # bare IP and a domain).
+  check_origin =
+    case System.get_env("PHX_ALLOWED_ORIGINS") do
+      nil -> ["//#{host}"]
+      csv -> String.split(csv, ",", trim: true)
+    end
+
   config :zombi, ZombiWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],
+    check_origin: check_origin,
     http: [
       # Enable IPv6 and bind on all interfaces.
       # Set it to  {0, 0, 0, 0, 0, 0, 0, 1} for local network only access.

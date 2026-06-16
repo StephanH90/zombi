@@ -74,6 +74,9 @@ defmodule ZombiWeb.Layouts do
       >
         Resources
       </.link>
+      <.link navigate={~p"/mods"} role="tab" class={["tab", @active == :mods && "tab-active"]}>
+        Mods
+      </.link>
     </div>
     """
   end
