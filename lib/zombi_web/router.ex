@@ -24,6 +24,7 @@ defmodule ZombiWeb.Router do
 
     live "/", ServerLive
     live "/resources", ResourcesLive
+    live "/players", PlayersLive
     live "/mods", ModsLive
     live "/logs", LogsLive
   end

@@ -1,19 +1,26 @@
 # Zombi
 
-A small Phoenix LiveView control panel for a Project Zomboid dedicated server.
-Single password-protected page that lets trusted users:
+A password-protected Phoenix LiveView control panel for a Project Zomboid
+dedicated server. Tabs:
 
-- **Restart the server** (`docker compose restart` on the host).
-- **See pending workshop mod updates** — which mods have a newer version on
-  Steam than the server has installed (the cause of "can't join, mod version
-  mismatch"). A restart re-pulls them.
-- **See who's online** via RCON, with a clear "safe to restart" indicator so
-  you don't kick players mid-game.
+- **Control** — restart the server (`docker compose restart`), with a "safe to
+  restart" indicator showing who's online (via RCON) so you don't kick players,
+  plus pending workshop mod updates (the cause of "can't join, mod mismatch").
+- **Resources** — live host CPU (per core) and memory graphs (via `os_mon`),
+  plus live players / loaded-zombie count from the server-side mod.
+- **Players** — persisted per-player stats (kills, hours survived, health, last
+  seen) with a kill-trend graph each, and an activity feed (join/leave/death).
+- **Mods** — full installed-mod table with Steam Workshop links and the active
+  game build version.
+- **Logs** — live `docker logs` stream (last 500 lines), color-coded by level.
 
 ## Stack
 
-Phoenix 1.8 + LiveView, no database use for the feature (Ash/SQLite are present
-from the generator but the panel itself is stateless). Auth is HTTP Basic.
+Phoenix 1.8 + LiveView. Auth is HTTP Basic. Persistent stats are stored in
+SQLite via **Ash** (the `Zombi.Stats` domain: `Player`, `PlayerSnapshot`,
+`ServerEvent`), so player history and the activity feed survive restarts. Game
+stats come from a small server-side Lua mod (`priv/pz_mods/ZombiStats`) that
+writes JSON the app reads; see [Server-side mod](#server-side-mod).
 
 ## Configuration
 
@@ -25,6 +32,7 @@ All runtime config comes from environment variables (see `config/runtime.exs`):
 | `AUTH_PASSWORD` | Basic auth password | `changeme` |
 | `PZ_COMPOSE_DIR` | Dir containing the Zomboid `docker-compose.yml` | `.` |
 | `PZ_SERVER_NAME` | Server config name (`<name>.ini`) | `servertest` |
+| `PZ_CONTAINER` | Zomboid container name (for logs / version) | `projectzomboid` |
 | `RCON_HOST` / `RCON_PORT` / `RCON_PASSWORD` | RCON connection for the player list | `127.0.0.1` / `27015` / – |
 | `SSL_CERT_PATH` / `SSL_KEY_PATH` / `SSL_PORT` | Enable native HTTPS when set | – / – / `443` |
 | `SECRET_KEY_BASE` | Phoenix secret (`mix phx.gen.secret`) | required in prod |
@@ -61,6 +69,11 @@ it in behind systemd. Override the target with env vars:
 ```bash
 DEPLOY_HOST=root@1.2.3.4 DEPLOY_DIR=/opt/zombi SERVICE=zombi bin/deploy.sh
 ```
+
+The script builds a prod release, packages it, scp's it to the server, swaps it
+in behind systemd, and runs database migrations (`Zombi.Release.migrate()` via
+`bin/zombi rpc` on the live node). New migrations are generated with
+`mix ash.codegen <name>` after changing Ash resources.
 
 The build host and server must share OS/arch (the release bundles the Erlang
 runtime). Current target: Ubuntu 24.04 x86_64.
@@ -109,3 +122,25 @@ The deploy script assumes this already exists on the server:
 The Zomboid server must have RCON enabled (`RCONPort`/`RCONPassword` in its
 server `.ini`); binding RCON to `127.0.0.1` is recommended since the panel runs
 on the same host.
+
+For a domain, the simplest TLS is a reverse proxy: Caddy with
+`zombi.example.com { reverse_proxy 127.0.0.1:4000 }` gets and renews a
+Let's Encrypt cert automatically; bind the app to loopback and leave `SSL_*`
+unset.
+
+## Server-side mod
+
+`priv/pz_mods/ZombiStats/` is a server-side-only Project Zomboid mod (B42
+layout). Every few seconds it writes `<data-dir>/Lua/zombi-stats.json` with the
+online players (name, kills, hours survived, health) and loaded-zombie count,
+and appends a line to `Lua/zombi-events.json` on each player death. The app
+reads these files; `Zombi.StatsIngester` persists them via the `Zombi.Stats`
+domain on a timer.
+
+Because it's server-side only (no client content), **connecting players don't
+need to install or download anything**. To install:
+
+1. Copy the folder to `<PZ_COMPOSE_DIR>/server-data/mods/ZombiStats/`.
+2. Add `ZombiStats` to the `Mods=` line in the server `.ini` (not
+   `WorkshopItems=` — it's local).
+3. Restart the Zomboid server so it loads.

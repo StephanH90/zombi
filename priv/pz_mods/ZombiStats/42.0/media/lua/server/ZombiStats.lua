@@ -1,19 +1,44 @@
 -- Zombi Stats Exporter (server-side only).
 --
--- Every few seconds, writes a small JSON file with the current player count
--- and the number of loaded zombies. The Zombi control panel reads this file
--- (it runs on the same host) and shows the numbers. Clients never load this.
+-- Writes two files in the Zomboid data dir's Lua/ folder for the Zombi control
+-- panel (which runs on the same host) to read. Clients never load this mod.
 --
--- Note: zombies only exist as real objects in chunks loaded around players, so
--- this is the loaded-zombie count, not a world-wide total.
+--   zombi-stats.json  - overwritten every few seconds with current state:
+--       { "ts", "zombies", "players": [ {name, kills, hours, health}, ... ] }
+--   zombi-events.json - appended one JSON object per line on player death.
+--
+-- Note: "zombies" is the loaded-chunk count, not a world-wide total.
 
 local INTERVAL_MS = 5000
-local OUTPUT_FILE = "zombi-stats.json"
+local STATS_FILE = "zombi-stats.json"
+local EVENTS_FILE = "zombi-events.json"
 
-local function playerCount()
+local function jsonStr(s)
+    s = tostring(s or "")
+    return '"' .. s:gsub("\\", "\\\\"):gsub('"', '\\"') .. '"'
+end
+
+local function playersJson()
+    local parts = {}
     local players = getOnlinePlayers()
-    if players then return players:size() end
-    return 0
+    if players then
+        for i = 0, players:size() - 1 do
+            local p = players:get(i)
+            if p then
+                local health = 0
+                local bd = p:getBodyDamage()
+                if bd then health = bd:getOverallBodyHealth() end
+                parts[#parts + 1] = string.format(
+                    '{"name":%s,"kills":%d,"hours":%.1f,"health":%.1f}',
+                    jsonStr(p:getUsername()),
+                    p:getZombieKills() or 0,
+                    p:getHoursSurvived() or 0,
+                    health or 0
+                )
+            end
+        end
+    end
+    return "[" .. table.concat(parts, ",") .. "]"
 end
 
 local function loadedZombieCount()
@@ -27,14 +52,10 @@ end
 
 local function writeStats()
     local json = string.format(
-        '{"ts":%d,"players":%d,"zombies":%d}',
-        getTimestampMs(),
-        playerCount(),
-        loadedZombieCount()
+        '{"ts":%d,"players":%s,"zombies":%d}',
+        getTimestampMs(), playersJson(), loadedZombieCount()
     )
-
-    -- getFileWriter writes relative to the Zomboid data directory.
-    local writer = getFileWriter(OUTPUT_FILE, true, false)
+    local writer = getFileWriter(STATS_FILE, true, false)
     if writer then
         writer:write(json)
         writer:close()
@@ -50,4 +71,19 @@ local function onTick()
     end
 end
 
+local function onDeath(character)
+    if character and instanceof(character, "IsoPlayer") then
+        local line = string.format(
+            '{"kind":"death","name":%s,"ts":%d}',
+            jsonStr(character:getUsername()), getTimestampMs()
+        )
+        local writer = getFileWriter(EVENTS_FILE, true, true)
+        if writer then
+            writer:writeln(line)
+            writer:close()
+        end
+    end
+end
+
 Events.OnTickEvenPaused.Add(onTick)
+Events.OnCharacterDeath.Add(onDeath)

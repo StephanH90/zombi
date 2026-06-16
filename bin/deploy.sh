@@ -47,6 +47,8 @@ tar -xzf $TARBALL -C $DIR
 systemctl start $SERVICE
 sleep 5
 systemctl is-active $SERVICE
+echo "==> Running migrations"
+$DIR/bin/zombi rpc 'Zombi.Release.migrate()'
 REMOTE
 
 echo "==> Deployed"

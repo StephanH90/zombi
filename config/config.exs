@@ -49,7 +49,8 @@ config :spark,
 
 config :zombi,
   ecto_repos: [Zombi.Repo],
-  generators: [timestamp_type: :utc_datetime]
+  generators: [timestamp_type: :utc_datetime],
+  ash_domains: [Zombi.Stats]
 
 # Configure the endpoint
 config :zombi, ZombiWeb.Endpoint,

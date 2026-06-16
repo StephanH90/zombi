@@ -15,6 +15,7 @@ defmodule Zombi.Application do
       {DNSCluster, query: Application.get_env(:zombi, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Zombi.PubSub},
       Zombi.StatsCollector,
+      Zombi.StatsIngester,
       Zombi.LogCollector,
       # Start a worker by calling: Zombi.Worker.start_link(arg)
       # {Zombi.Worker, arg},
