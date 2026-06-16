@@ -25,8 +25,10 @@ defmodule ZombiWeb.PlayersLive do
   # at the end of each minute, then the per-minute delta (clamped at 0 for
   # death / new character). One bar per minute.
   defp kills_per_minute(username) do
+    since = DateTime.add(DateTime.utc_now(), -30, :minute)
+
     username
-    |> Stats.player_history!()
+    |> Stats.player_history!(since)
     |> Enum.group_by(&minute_key(&1.inserted_at))
     |> Enum.sort_by(fn {key, _} -> key end)
     |> Enum.map(fn {_key, snaps} -> List.last(snaps).zombie_kills || 0 end)

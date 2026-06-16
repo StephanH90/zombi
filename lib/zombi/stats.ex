@@ -12,7 +12,7 @@ defmodule Zombi.Stats do
 
     resource Zombi.Stats.PlayerSnapshot do
       define :create_snapshot, action: :create
-      define :player_history, action: :for_player, args: [:username]
+      define :player_history, action: :for_player, args: [:username, :since]
     end
 
     resource Zombi.Stats.ServerEvent do
