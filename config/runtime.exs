@@ -69,6 +69,20 @@ if config_env() == :prod do
     ],
     secret_key_base: secret_key_base
 
+  # Native HTTPS listener. Enabled when SSL_CERT_PATH is set (e.g. a
+  # self-signed cert). Friends will see a browser warning for self-signed
+  # certs but the connection is encrypted.
+  if cert_path = System.get_env("SSL_CERT_PATH") do
+    config :zombi, ZombiWeb.Endpoint,
+      https: [
+        port: String.to_integer(System.get_env("SSL_PORT", "443")),
+        cipher_suite: :strong,
+        certfile: cert_path,
+        keyfile: System.fetch_env!("SSL_KEY_PATH"),
+        ip: {0, 0, 0, 0, 0, 0, 0, 0}
+      ]
+  end
+
   # ## SSL Support
   #
   # To get SSL working, you will need to add the `https` key
