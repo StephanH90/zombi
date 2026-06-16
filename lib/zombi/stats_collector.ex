@@ -34,7 +34,7 @@ defmodule Zombi.StatsCollector do
 
   @impl true
   def handle_info(:tick, state) do
-    sample = Zombi.SystemStats.sample()
+    sample = Map.put(Zombi.SystemStats.sample(), :game, Zombi.GameStats.read())
     Phoenix.PubSub.broadcast(Zombi.PubSub, @topic, {:stats_sample, sample})
     schedule()
     {:noreply, %{state | history: Enum.take([sample | state.history], @capacity)}}

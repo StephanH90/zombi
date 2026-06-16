@@ -1,0 +1,6 @@
+name=Zombi Stats Exporter
+id=ZombiStats
+description=Server-side only. Writes player and loaded-zombie counts to zombi-stats.json for the Zombi control panel. Clients do not need this mod.
+author=zombi
+category=Misc
+versionMin=42.0.0

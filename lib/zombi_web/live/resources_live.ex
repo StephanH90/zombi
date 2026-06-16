@@ -58,6 +58,31 @@ defmodule ZombiWeb.ResourcesLive do
             </div>
             <.sparkline values={memory_series(@samples)} class="text-secondary" />
           </div>
+
+          <div class="card bg-base-200 p-4">
+            <h2 class="font-semibold mb-3">Players &amp; zombies (live)</h2>
+            <%= case Map.get(@latest, :game) do %>
+              <% {:ok, g} -> %>
+                <div class="flex items-center justify-between text-sm">
+                  <span>Players online</span>
+                  <span class="font-medium">{g.players}</span>
+                </div>
+                <div class="flex items-center justify-between text-sm mt-2">
+                  <span>Loaded zombies</span>
+                  <span class="font-medium">{g.zombies}</span>
+                </div>
+                <.sparkline
+                  values={zombie_series(@samples)}
+                  max={zombie_max(@samples)}
+                  class="text-error"
+                />
+              <% _ -> %>
+                <p class="text-sm text-base-content/60">
+                  Game stats unavailable — the ZombiStats server mod isn't active yet
+                  (it starts after the next server restart).
+                </p>
+            <% end %>
+          </div>
         <% else %>
           <div class="text-center text-base-content/60">
             <span class="loading loading-spinner loading-sm"></span> Waiting for the first sample…
@@ -84,6 +109,7 @@ defmodule ZombiWeb.ResourcesLive do
   # Server-rendered SVG line graph. viewBox is a fixed 100x30 grid stretched to
   # the container width; values are percentages (0-100).
   attr :values, :list, required: true
+  attr :max, :any, default: 100
   attr :class, :string, default: ""
 
   defp sparkline(assigns) do
@@ -95,7 +121,7 @@ defmodule ZombiWeb.ResourcesLive do
       aria-hidden="true"
     >
       <polyline
-        points={spark_points(@values)}
+        points={spark_points(@values, @max)}
         fill="none"
         stroke="currentColor"
         stroke-width="1"
@@ -105,18 +131,35 @@ defmodule ZombiWeb.ResourcesLive do
     """
   end
 
-  defp spark_points(values) when length(values) < 2, do: ""
+  defp spark_points(values, _max) when length(values) < 2, do: ""
 
-  defp spark_points(values) do
+  defp spark_points(values, max) do
     n = length(values)
     step = 100 / (n - 1)
+    max = max(max, 1)
 
     values
     |> Enum.with_index()
     |> Enum.map_join(" ", fn {v, i} ->
       x = Float.round(i * step, 2)
-      y = Float.round(30 - min(v, 100) / 100 * 30, 2)
+      y = Float.round(30 - min(v, max) / max * 30, 2)
       "#{x},#{y}"
     end)
+  end
+
+  defp zombie_series(samples) do
+    Enum.map(samples, fn s ->
+      case Map.get(s, :game) do
+        {:ok, g} -> g.zombies * 1.0
+        _ -> 0.0
+      end
+    end)
+  end
+
+  defp zombie_max(samples) do
+    case zombie_series(samples) do
+      [] -> 1.0
+      vals -> max(Enum.max(vals), 1.0)
+    end
   end
 end
