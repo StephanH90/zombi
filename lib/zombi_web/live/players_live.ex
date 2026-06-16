@@ -48,41 +48,34 @@ defmodule ZombiWeb.PlayersLive do
             No player data yet. This fills in once the ZombiStats mod is active and players have joined.
           </div>
         <% else %>
-          <div class="overflow-x-auto">
-            <table class="table table-zebra">
-              <thead>
-                <tr>
-                  <th>Player</th>
-                  <th>Status</th>
-                  <th class="text-right">Kills</th>
-                  <th class="text-right">Hours</th>
-                  <th class="text-right">Health</th>
-                  <th>Last seen</th>
-                  <th class="w-96">Kills/min</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr :for={p <- @players}>
-                  <td class="font-medium">{p.username}</td>
-                  <td>
-                    <span :if={p.online} class="badge badge-success badge-sm">Online</span>
-                    <span :if={!p.online} class="badge badge-ghost badge-sm">Offline</span>
-                  </td>
-                  <td class="text-right">{p.zombie_kills}</td>
-                  <td class="text-right">{fmt_hours(p.hours_survived)}</td>
-                  <td class="text-right">{fmt_pct(p.health)}</td>
-                  <td class="text-sm text-base-content/60">{fmt_time(p.last_seen_at)}</td>
-                  <td>
-                    <div class="flex items-center gap-2">
-                      <.bars values={@histories[p.username]} class="text-primary" />
-                      <span class="text-xs tabular-nums whitespace-nowrap text-base-content/70">
-                        {fmt_rate(latest(@histories[p.username]))}
-                      </span>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <div class="flex flex-col gap-5">
+            <div :for={p <- @players} class="card bg-base-200 p-5">
+              <div class="flex flex-wrap items-baseline justify-between gap-2 mb-3">
+                <div class="flex items-center gap-2">
+                  <span class="font-semibold text-xl">{p.username}</span>
+                  <span :if={p.online} class="badge badge-success">Online</span>
+                  <span :if={!p.online} class="badge badge-ghost">Offline</span>
+                </div>
+                <div class="flex items-center gap-5 text-sm text-base-content/60">
+                  <span><span class="font-semibold text-base-content text-base">{p.zombie_kills}</span> kills</span>
+                  <span><span class="font-semibold text-base-content text-base">{fmt_hours(p.hours_survived)}</span> h survived</span>
+                  <span><span class="font-semibold text-base-content text-base">{fmt_pct(p.health)}</span> health</span>
+                  <span class="text-sm text-base-content/40">seen {fmt_time(p.last_seen_at)}</span>
+                </div>
+              </div>
+
+              <div class="flex items-end justify-between mb-1">
+                <span class="text-sm font-medium text-base-content/70">Kills per minute</span>
+                <span class="text-2xl font-bold text-primary tabular-nums">
+                  {fmt_rate(latest(@histories[p.username]))}
+                </span>
+              </div>
+              <.bars values={@histories[p.username]} class="text-primary" />
+              <div class="flex justify-between text-xs text-base-content/40 mt-1">
+                <span>{length(@histories[p.username] || [])} samples</span>
+                <span :if={peak(@histories[p.username])}>peak {peak(@histories[p.username])}/min</span>
+              </div>
+            </div>
           </div>
         <% end %>
 
@@ -120,6 +113,9 @@ defmodule ZombiWeb.PlayersLive do
   defp latest(values) when is_list(values) and values != [], do: List.last(values)
   defp latest(_), do: nil
 
+  defp peak([_ | _] = values), do: Enum.max(values)
+  defp peak(_), do: nil
+
   defp fmt_rate(nil), do: "—"
   defp fmt_rate(v), do: "#{v}/min"
 
@@ -128,7 +124,12 @@ defmodule ZombiWeb.PlayersLive do
 
   defp bars(assigns) do
     ~H"""
-    <svg viewBox="0 0 100 36" preserveAspectRatio="none" class={["w-72 h-24", @class]} aria-hidden="true">
+    <svg
+      viewBox="0 0 100 40"
+      preserveAspectRatio="none"
+      class={["w-full h-64 bg-base-300 rounded-box", @class]}
+      aria-hidden="true"
+    >
       <rect
         :for={r <- bar_rects(@values)}
         x={r.x}
@@ -151,8 +152,8 @@ defmodule ZombiWeb.PlayersLive do
     values
     |> Enum.with_index()
     |> Enum.map(fn {v, i} ->
-      height = Float.round(v / max * 36, 2)
-      %{x: Float.round(i * step, 2), y: Float.round(36 - height, 2), w: Float.round(step * 0.8, 2), h: height}
+      height = Float.round(v / max * 40, 2)
+      %{x: Float.round(i * step, 2), y: Float.round(40 - height, 2), w: Float.round(step * 0.85, 2), h: height}
     end)
   end
 end
