@@ -21,20 +21,20 @@ defmodule ZombiWeb.PlayersLive do
     assign(socket, players: players, histories: histories, events: Stats.recent_events!())
   end
 
-  # Kills-per-minute over time, derived from consecutive cumulative-kill
-  # snapshots (delta kills / delta minutes). Negative deltas (death / new
-  # character) clamp to 0.
+  # Kills per minute over the last 30 minutes: take the cumulative kill count
+  # at the end of each minute, then the per-minute delta (clamped at 0 for
+  # death / new character). One bar per minute.
   defp kills_per_minute(username) do
     username
     |> Stats.player_history!()
-    |> Enum.reverse()
+    |> Enum.group_by(&minute_key(&1.inserted_at))
+    |> Enum.sort_by(fn {key, _} -> key end)
+    |> Enum.map(fn {_key, snaps} -> List.last(snaps).zombie_kills || 0 end)
     |> Enum.chunk_every(2, 1, :discard)
-    |> Enum.map(fn [a, b] ->
-      minutes = DateTime.diff(b.inserted_at, a.inserted_at, :second) / 60
-      delta = (b.zombie_kills || 0) - (a.zombie_kills || 0)
-      if minutes > 0, do: Float.round(max(delta, 0) / minutes, 1), else: 0.0
-    end)
+    |> Enum.map(fn [a, b] -> max(b - a, 0) end)
   end
+
+  defp minute_key(%DateTime{} = dt), do: {dt.year, dt.month, dt.day, dt.hour, dt.minute}
 
   def render(assigns) do
     ~H"""
@@ -65,14 +65,14 @@ defmodule ZombiWeb.PlayersLive do
               </div>
 
               <div class="flex items-end justify-between mb-1">
-                <span class="text-sm font-medium text-base-content/70">Kills per minute</span>
+                <span class="text-sm font-medium text-base-content/70">Kills per minute · last 30 min</span>
                 <span class="text-2xl font-bold text-primary tabular-nums">
                   {fmt_rate(latest(@histories[p.username]))}
                 </span>
               </div>
               <.bars values={@histories[p.username]} class="text-primary" />
               <div class="flex justify-between text-xs text-base-content/40 mt-1">
-                <span>{length(@histories[p.username] || [])} samples</span>
+                <span>{length(@histories[p.username] || [])} min</span>
                 <span :if={peak(@histories[p.username])}>peak {peak(@histories[p.username])}/min</span>
               </div>
             </div>

@@ -8,10 +8,11 @@ defmodule Zombi.StatsIngester do
   use GenServer
   require Logger
 
-  # Upsert current stats + join/leave events, and take a history snapshot, on
-  # every tick. Capped in practice by how often the mod writes new data.
+  # Upsert current stats + join/leave events every second (for live numbers);
+  # take a history snapshot every 5s (the chart buckets these per minute over
+  # the last 30 minutes, so finer snapshots wouldn't change it).
   @interval_ms 1_000
-  @snapshot_every_ms 1_000
+  @snapshot_every_ms 5_000
 
   def start_link(_opts), do: GenServer.start_link(__MODULE__, nil, name: __MODULE__)
 

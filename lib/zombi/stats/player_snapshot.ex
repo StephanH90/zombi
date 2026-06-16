@@ -10,10 +10,10 @@ defmodule Zombi.Stats.PlayerSnapshot do
     defaults [:read, create: [:username, :zombie_kills, :hours_survived]]
 
     read :for_player do
-      description "Recent snapshots for one player (newest first), for graphing."
+      description "Last 30 minutes of snapshots for one player (oldest first)."
       argument :username, :string, allow_nil?: false
-      filter expr(username == ^arg(:username))
-      prepare build(sort: [inserted_at: :desc], limit: 60)
+      filter expr(username == ^arg(:username) and inserted_at >= ago(30, :minute))
+      prepare build(sort: [inserted_at: :asc])
     end
   end
 
