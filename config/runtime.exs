@@ -29,6 +29,7 @@ config :zombi, :basic_auth,
   password: System.get_env("AUTH_PASSWORD", "changeme")
 
 config :zombi, :compose_dir, System.get_env("PZ_COMPOSE_DIR", ".")
+config :zombi, :pz_server_name, System.get_env("PZ_SERVER_NAME", "servertest")
 
 if config_env() == :prod do
   database_path =
