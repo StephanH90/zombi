@@ -3,7 +3,7 @@ defmodule ZombiWeb.PlayersLive do
 
   alias Zombi.Stats
 
-  @refresh_ms 15_000
+  @refresh_ms 1_000
 
   def mount(_params, _session, socket) do
     if connected?(socket), do: Process.send_after(self(), :refresh, @refresh_ms)
@@ -15,8 +15,6 @@ defmodule ZombiWeb.PlayersLive do
     {:noreply, load(socket)}
   end
 
-  def handle_event("refresh", _params, socket), do: {:noreply, load(socket)}
-
   defp load(socket) do
     players = Stats.list_players!(query: [sort: [online: :desc, username: :asc]])
     histories = Map.new(players, fn p -> {p.username, kills_series(p.username)} end)
@@ -26,8 +24,8 @@ defmodule ZombiWeb.PlayersLive do
   defp kills_series(username) do
     username
     |> Stats.player_history!()
+    |> Enum.reverse()
     |> Enum.map(&(&1.zombie_kills || 0))
-    |> Enum.take(-40)
   end
 
   def render(assigns) do
@@ -35,10 +33,7 @@ defmodule ZombiWeb.PlayersLive do
     <Layouts.app flash={@flash}>
       <Layouts.tabs active={:players} />
       <div class="flex flex-col gap-6 py-10">
-        <div class="flex items-center justify-between">
-          <h1 class="text-2xl font-semibold">Players</h1>
-          <button class="btn btn-sm" phx-click="refresh">Refresh</button>
-        </div>
+        <h1 class="text-2xl font-semibold">Players</h1>
 
         <%= if @players == [] do %>
           <div class="alert alert-info">

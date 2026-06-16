@@ -3,8 +3,9 @@ defmodule Zombi.Stats.Player.Ingest do
   Implementation of the `Zombi.Stats.Player.ingest` generic action.
 
   Given the players currently online (from the server-side mod), upserts each
-  player's latest stats, records a snapshot for graphing, and logs join/leave
-  events by diffing against the players currently flagged online in the DB.
+  player's latest stats and logs join/leave events by diffing against the
+  players currently flagged online in the DB. History snapshots are taken
+  separately (less often) by `Zombi.StatsIngester`.
   """
   use Ash.Resource.Actions.Implementation
 
@@ -23,12 +24,6 @@ defmodule Zombi.Stats.Player.Ingest do
         hours_survived: num(p, :hours),
         zombie_kills: int(p, :kills),
         health: num(p, :health)
-      })
-
-      Zombi.Stats.create_snapshot!(%{
-        username: n,
-        zombie_kills: int(p, :kills),
-        hours_survived: num(p, :hours)
       })
 
       unless MapSet.member?(prev_names, n) do

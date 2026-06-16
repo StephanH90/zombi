@@ -8,7 +8,10 @@ defmodule Zombi.StatsIngester do
   use GenServer
   require Logger
 
-  @interval_ms 60_000
+  # Upsert current stats + join/leave events frequently; take history snapshots
+  # (for graphs) much less often so the DB doesn't bloat.
+  @interval_ms 5_000
+  @snapshot_every_ms 60_000
 
   def start_link(_opts), do: GenServer.start_link(__MODULE__, nil, name: __MODULE__)
 
@@ -16,7 +19,7 @@ defmodule Zombi.StatsIngester do
   def init(_) do
     # Skip death lines already in the file so we don't replay history on boot.
     schedule()
-    {:ok, %{deaths_offset: length(death_lines())}}
+    {:ok, %{deaths_offset: length(death_lines()), last_snapshot: nil}}
   end
 
   @impl true
@@ -33,17 +36,41 @@ defmodule Zombi.StatsIngester do
   defp ingest_players(state) do
     case Zombi.GameStats.read() do
       {:ok, %{player_details: details}} ->
-        try do
-          Zombi.Stats.ingest_sample!(details)
-        rescue
-          e -> Logger.warning("stats ingest failed: #{Exception.message(e)}")
-        end
+        safely(fn -> Zombi.Stats.ingest_sample!(details) end, "stats ingest")
+        maybe_snapshot(state, details)
 
       _ ->
-        :ok
+        state
     end
+  end
 
-    state
+  defp maybe_snapshot(state, details) do
+    now = System.monotonic_time(:millisecond)
+
+    if state.last_snapshot == nil or now - state.last_snapshot >= @snapshot_every_ms do
+      safely(
+        fn ->
+          Enum.each(details, fn p ->
+            Zombi.Stats.create_snapshot!(%{
+              username: p.name,
+              zombie_kills: p.kills,
+              hours_survived: p.hours
+            })
+          end)
+        end,
+        "snapshot"
+      )
+
+      %{state | last_snapshot: now}
+    else
+      state
+    end
+  end
+
+  defp safely(fun, label) do
+    fun.()
+  rescue
+    e -> Logger.warning("#{label} failed: #{Exception.message(e)}")
   end
 
   defp ingest_deaths(state) do

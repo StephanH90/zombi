@@ -10,10 +10,10 @@ defmodule Zombi.Stats.PlayerSnapshot do
     defaults [:read, create: [:username, :zombie_kills, :hours_survived]]
 
     read :for_player do
-      description "Time-ordered snapshots for one player, for graphing."
+      description "Recent snapshots for one player (newest first), for graphing."
       argument :username, :string, allow_nil?: false
       filter expr(username == ^arg(:username))
-      prepare build(sort: [inserted_at: :asc])
+      prepare build(sort: [inserted_at: :desc], limit: 60)
     end
   end
 
