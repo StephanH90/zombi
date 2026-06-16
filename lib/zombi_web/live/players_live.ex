@@ -17,15 +17,23 @@ defmodule ZombiWeb.PlayersLive do
 
   defp load(socket) do
     players = Stats.list_players!(query: [sort: [online: :desc, username: :asc]])
-    histories = Map.new(players, fn p -> {p.username, kills_series(p.username)} end)
+    histories = Map.new(players, fn p -> {p.username, kills_per_minute(p.username)} end)
     assign(socket, players: players, histories: histories, events: Stats.recent_events!())
   end
 
-  defp kills_series(username) do
+  # Kills-per-minute over time, derived from consecutive cumulative-kill
+  # snapshots (delta kills / delta minutes). Negative deltas (death / new
+  # character) clamp to 0.
+  defp kills_per_minute(username) do
     username
     |> Stats.player_history!()
     |> Enum.reverse()
-    |> Enum.map(&(&1.zombie_kills || 0))
+    |> Enum.chunk_every(2, 1, :discard)
+    |> Enum.map(fn [a, b] ->
+      minutes = DateTime.diff(b.inserted_at, a.inserted_at, :second) / 60
+      delta = (b.zombie_kills || 0) - (a.zombie_kills || 0)
+      if minutes > 0, do: Float.round(max(delta, 0) / minutes, 1), else: 0.0
+    end)
   end
 
   def render(assigns) do
@@ -50,7 +58,7 @@ defmodule ZombiWeb.PlayersLive do
                   <th class="text-right">Hours</th>
                   <th class="text-right">Health</th>
                   <th>Last seen</th>
-                  <th class="w-40">Kills trend</th>
+                  <th class="w-52">Kills/min</th>
                 </tr>
               </thead>
               <tbody>
@@ -64,7 +72,14 @@ defmodule ZombiWeb.PlayersLive do
                   <td class="text-right">{fmt_hours(p.hours_survived)}</td>
                   <td class="text-right">{fmt_pct(p.health)}</td>
                   <td class="text-sm text-base-content/60">{fmt_time(p.last_seen_at)}</td>
-                  <td><.sparkline values={@histories[p.username]} class="text-primary" /></td>
+                  <td>
+                    <div class="flex items-center gap-2">
+                      <.bars values={@histories[p.username]} class="text-primary" />
+                      <span class="text-xs tabular-nums whitespace-nowrap text-base-content/70">
+                        {fmt_rate(latest(@histories[p.username]))}
+                      </span>
+                    </div>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -102,34 +117,42 @@ defmodule ZombiWeb.PlayersLive do
   defp fmt_time(nil), do: "—"
   defp fmt_time(%DateTime{} = dt), do: Calendar.strftime(dt, "%Y-%m-%d %H:%M UTC")
 
+  defp latest(values) when is_list(values) and values != [], do: List.last(values)
+  defp latest(_), do: nil
+
+  defp fmt_rate(nil), do: "—"
+  defp fmt_rate(v), do: "#{v}/min"
+
   attr :values, :list, required: true
   attr :class, :string, default: ""
 
-  defp sparkline(assigns) do
+  defp bars(assigns) do
     ~H"""
-    <svg viewBox="0 0 100 24" preserveAspectRatio="none" class={["w-full h-6", @class]} aria-hidden="true">
-      <polyline
-        points={spark_points(@values)}
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1"
-        vector-effect="non-scaling-stroke"
+    <svg viewBox="0 0 100 36" preserveAspectRatio="none" class={["w-32 h-9", @class]} aria-hidden="true">
+      <rect
+        :for={r <- bar_rects(@values)}
+        x={r.x}
+        y={r.y}
+        width={r.w}
+        height={r.h}
+        fill="currentColor"
       />
     </svg>
     """
   end
 
-  defp spark_points(values) when not is_list(values) or length(values) < 2, do: ""
+  defp bar_rects(values) when not is_list(values) or values == [], do: []
 
-  defp spark_points(values) do
+  defp bar_rects(values) do
     n = length(values)
-    step = 100 / (n - 1)
+    step = 100 / n
     max = max(Enum.max(values), 1)
 
     values
     |> Enum.with_index()
-    |> Enum.map_join(" ", fn {v, i} ->
-      "#{Float.round(i * step, 2)},#{Float.round(24 - v / max * 24, 2)}"
+    |> Enum.map(fn {v, i} ->
+      height = Float.round(v / max * 36, 2)
+      %{x: Float.round(i * step, 2), y: Float.round(36 - height, 2), w: Float.round(step * 0.8, 2), h: height}
     end)
   end
 end
