@@ -1,11 +1,9 @@
 defmodule ZombiWeb.ServerLive do
   use ZombiWeb, :live_view
 
-  @player_refresh_ms 15_000
+  @player_refresh_ms 1_000
 
   def mount(_params, _session, socket) do
-    if connected?(socket), do: Process.send_after(self(), :refresh_players, @player_refresh_ms)
-
     {:ok,
      socket
      |> assign(:restarting?, false)
@@ -26,12 +24,7 @@ defmodule ZombiWeb.ServerLive do
     {:noreply, socket |> assign(:mods, :loading) |> check_mods()}
   end
 
-  def handle_event("check_players", _params, socket) do
-    {:noreply, socket |> assign(:players, :loading) |> check_players()}
-  end
-
   def handle_info(:refresh_players, socket) do
-    Process.send_after(self(), :refresh_players, @player_refresh_ms)
     {:noreply, check_players(socket)}
   end
 
@@ -69,15 +62,24 @@ defmodule ZombiWeb.ServerLive do
   end
 
   def handle_async(:check_players, {:ok, result}, socket) do
-    {:noreply, assign(socket, :players, result)}
+    {:noreply, socket |> assign(:players, result) |> schedule_player_refresh()}
   end
 
   def handle_async(:check_players, {:exit, reason}, socket) do
-    {:noreply, assign(socket, :players, {:error, "check crashed: #{inspect(reason)}"})}
+    {:noreply,
+     socket
+     |> assign(:players, {:error, "check crashed: #{inspect(reason)}"})
+     |> schedule_player_refresh()}
   end
 
   defp check_mods(socket), do: start_async(socket, :check_mods, &Zombi.Workshop.pending_updates/0)
   defp check_players(socket), do: start_async(socket, :check_players, &Zombi.Players.online/0)
+
+  # Re-poll one second after each check completes, so polls never overlap.
+  defp schedule_player_refresh(socket) do
+    Process.send_after(self(), :refresh_players, @player_refresh_ms)
+    socket
+  end
 
   def render(assigns) do
     ~H"""
@@ -129,30 +131,27 @@ defmodule ZombiWeb.ServerLive do
 
   defp player_status(%{players: {:ok, %{count: 0}}} = assigns) do
     ~H"""
-    <div class="alert alert-success w-full justify-between" id="player-status">
+    <div class="alert alert-success w-full" id="player-status">
       <span>No players online — safe to restart.</span>
-      <button class="btn btn-sm" phx-click="check_players">Refresh</button>
     </div>
     """
   end
 
   defp player_status(%{players: {:ok, %{count: _}}} = assigns) do
     ~H"""
-    <div class="alert alert-warning w-full justify-between" id="player-status">
+    <div class="alert alert-warning w-full" id="player-status">
       <span>
         {player_count_label(@players)} online: {Enum.join(elem(@players, 1).names, ", ")} — restarting
         will disconnect them.
       </span>
-      <button class="btn btn-sm" phx-click="check_players">Refresh</button>
     </div>
     """
   end
 
   defp player_status(%{players: {:error, _}} = assigns) do
     ~H"""
-    <div class="alert alert-warning w-full justify-between" id="player-status">
+    <div class="alert alert-warning w-full" id="player-status">
       <span>Couldn't check players: {elem(@players, 1)}</span>
-      <button class="btn btn-sm" phx-click="check_players">Retry</button>
     </div>
     """
   end
@@ -174,7 +173,7 @@ defmodule ZombiWeb.ServerLive do
 
   defp mod_status(%{mods: {:error, _}} = assigns) do
     ~H"""
-    <div class="alert alert-warning w-full justify-between" id="mod-status">
+    <div class="alert alert-warning w-full flex items-center justify-between" id="mod-status">
       <span>Couldn't check mod updates: {elem(@mods, 1)}</span>
       <button class="btn btn-sm" phx-click="check_mods">Retry</button>
     </div>
@@ -183,7 +182,7 @@ defmodule ZombiWeb.ServerLive do
 
   defp mod_status(%{mods: {:ok, []}} = assigns) do
     ~H"""
-    <div class="alert alert-success w-full justify-between" id="mod-status">
+    <div class="alert alert-success w-full flex items-center justify-between" id="mod-status">
       <span>All mods are up to date.</span>
       <button class="btn btn-sm" phx-click="check_mods">Check now</button>
     </div>

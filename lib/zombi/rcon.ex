@@ -87,7 +87,7 @@ defmodule Zombi.Rcon do
   # Keep reading follow-up packets with a short timeout; stop once the socket
   # is idle (the full response has arrived).
   defp drain(sock, acc) do
-    case recv_packet(sock, 400) do
+    case recv_packet(sock, 150) do
       {:ok, _id, _type, body} -> drain(sock, acc <> body)
       {:error, _} -> acc
     end
