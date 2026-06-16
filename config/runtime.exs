@@ -31,6 +31,11 @@ config :zombi, :basic_auth,
 config :zombi, :compose_dir, System.get_env("PZ_COMPOSE_DIR", ".")
 config :zombi, :pz_server_name, System.get_env("PZ_SERVER_NAME", "servertest")
 
+config :zombi, :rcon,
+  host: System.get_env("RCON_HOST", "127.0.0.1"),
+  port: String.to_integer(System.get_env("RCON_PORT", "27015")),
+  password: System.get_env("RCON_PASSWORD", "")
+
 if config_env() == :prod do
   database_path =
     System.get_env("DATABASE_PATH") ||
