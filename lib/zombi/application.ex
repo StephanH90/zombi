@@ -14,6 +14,7 @@ defmodule Zombi.Application do
        repos: Application.fetch_env!(:zombi, :ecto_repos), skip: skip_migrations?()},
       {DNSCluster, query: Application.get_env(:zombi, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Zombi.PubSub},
+      Zombi.StatsCollector,
       # Start a worker by calling: Zombi.Worker.start_link(arg)
       # {Zombi.Worker, arg},
       # Start to serve requests, typically the last entry

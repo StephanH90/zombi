@@ -45,18 +45,7 @@ defmodule ZombiWeb.Layouts do
       <div class="flex-none">
         <ul class="flex flex-column px-1 space-x-4 items-center">
           <li>
-            <a href="https://phoenixframework.org/" class="btn btn-ghost">Website</a>
-          </li>
-          <li>
-            <a href="https://github.com/phoenixframework/phoenix" class="btn btn-ghost">GitHub</a>
-          </li>
-          <li>
             <.theme_toggle />
-          </li>
-          <li>
-            <a href="https://phoenix.hexdocs.pm/overview.html" class="btn btn-primary">
-              Get Started <span aria-hidden="true">&rarr;</span>
-            </a>
           </li>
         </ul>
       </div>
@@ -69,6 +58,28 @@ defmodule ZombiWeb.Layouts do
     </main>
 
     <.flash_group flash={@flash} />
+    """
+  end
+
+  @doc """
+  Tab navigation between the control and resources pages.
+  """
+  attr :active, :atom, required: true, doc: "the active tab (:control or :resources)"
+
+  def tabs(assigns) do
+    ~H"""
+    <div role="tablist" class="tabs tabs-box justify-center" id="main-tabs">
+      <.link navigate={~p"/"} role="tab" class={["tab", @active == :control && "tab-active"]}>
+        Control
+      </.link>
+      <.link
+        navigate={~p"/resources"}
+        role="tab"
+        class={["tab", @active == :resources && "tab-active"]}
+      >
+        Resources
+      </.link>
+    </div>
     """
   end
 

@@ -23,6 +23,7 @@ defmodule ZombiWeb.Router do
     pipe_through :browser
 
     live "/", ServerLive
+    live "/resources", ResourcesLive
   end
 
   # Other scopes may use custom stacks.
