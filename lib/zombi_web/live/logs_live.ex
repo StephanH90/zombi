@@ -38,9 +38,12 @@ defmodule ZombiWeb.LogsLive do
           phx-hook=".AutoScroll"
           class="pz-console bg-base-300 rounded-box p-3 h-[65vh] overflow-y-auto text-xs leading-relaxed whitespace-pre-wrap break-words"
         >
-          <div :for={{dom_id, line} <- @streams.logs} id={dom_id} class={level_class(line.text)}>
-            {line.text}
-          </div>
+          <div
+            :for={{dom_id, line} <- @streams.logs}
+            id={dom_id}
+            class={level_class(line.text)}
+            phx-no-format
+          >{line.text}</div>
         </div>
       </div>
       <script :type={Phoenix.LiveView.ColocatedHook} name=".AutoScroll">
