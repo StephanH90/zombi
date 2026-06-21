@@ -23,6 +23,47 @@ defmodule Zombi.WorkshopTest do
     end
   end
 
+  describe "parse_mods_line/1" do
+    test "extracts the semicolon-separated Mods list" do
+      ini = """
+      Mods=damnlib;ECTO1;Brita_2
+      WorkshopItems=2618213077
+      """
+
+      assert Workshop.parse_mods_line(ini) == ["damnlib", "ECTO1", "Brita_2"]
+    end
+
+    test "returns [] when no Mods line" do
+      assert Workshop.parse_mods_line("Public=true\n") == []
+    end
+
+    test "ignores trailing empty entries" do
+      assert Workshop.parse_mods_line("Mods=a;b;") == ["a", "b"]
+    end
+  end
+
+  describe "url_to_id/1" do
+    test "extracts id from a full workshop url" do
+      assert Workshop.url_to_id(
+               "https://steamcommunity.com/sharedfiles/filedetails/?id=2618213077"
+             ) == {:ok, "2618213077"}
+    end
+
+    test "extracts id when extra query params follow" do
+      assert Workshop.url_to_id(
+               "https://steamcommunity.com/sharedfiles/filedetails/?id=123&searchtext=foo"
+             ) == {:ok, "123"}
+    end
+
+    test "accepts a bare numeric id" do
+      assert Workshop.url_to_id("2618213077") == {:ok, "2618213077"}
+    end
+
+    test "returns error for input with no id" do
+      assert {:error, _} = Workshop.url_to_id("https://steamcommunity.com/app/108600")
+    end
+  end
+
   describe "parse_acf/1" do
     test "maps each workshop id to its timeupdated" do
       acf = """

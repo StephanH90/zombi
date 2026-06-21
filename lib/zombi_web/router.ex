@@ -27,6 +27,8 @@ defmodule ZombiWeb.Router do
     live "/players", PlayersLive
     live "/mods", ModsLive
     live "/logs", LogsLive
+    live "/backup", BackupLive
+    get "/backups/:id/download", BackupController, :download
   end
 
   # Other scopes may use custom stacks.

@@ -59,7 +59,9 @@ defmodule ZombiWeb.Layouts do
   @doc """
   Tab navigation between the control and resources pages.
   """
-  attr :active, :atom, required: true, doc: "the active tab (:control or :resources)"
+  attr :active, :atom,
+    required: true,
+    doc: "the active tab (:control, :resources, :players, :mods, :logs, or :backup)"
 
   def tabs(assigns) do
     ~H"""
@@ -82,6 +84,9 @@ defmodule ZombiWeb.Layouts do
       </.link>
       <.link navigate={~p"/logs"} role="tab" class={["tab", @active == :logs && "tab-active"]}>
         Logs
+      </.link>
+      <.link navigate={~p"/backup"} role="tab" class={["tab", @active == :backup && "tab-active"]}>
+        Backup
       </.link>
     </div>
     """

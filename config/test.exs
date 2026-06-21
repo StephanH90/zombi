@@ -1,6 +1,16 @@
 import Config
 config :ash, policies: [show_policy_breakdowns?: true], disable_async?: true
 
+# Tests run against fakes. Individual tests may override per-test with
+# Application.put_env/3 + on_exit restore. backups_dir defaults to a tmp path;
+# tests that touch the filesystem should tag :tmp_dir and override it.
+config :zombi,
+  game_server: Zombi.GameServer.Fake,
+  mod_config: Zombi.ModConfig.Fake,
+  workshop_client: Zombi.WorkshopClient.Fake,
+  backup_runner: Zombi.Backup.Fake,
+  backups_dir: Path.expand("../tmp/test_backups", __DIR__)
+
 # Configure your database
 #
 # The MIX_TEST_PARTITION environment variable can be used

@@ -17,6 +17,7 @@ defmodule Zombi.Application do
       Zombi.StatsCollector,
       Zombi.StatsIngester,
       Zombi.LogCollector,
+      {Task.Supervisor, name: Zombi.BackupTaskSupervisor},
       # Start a worker by calling: Zombi.Worker.start_link(arg)
       # {Zombi.Worker, arg},
       # Start to serve requests, typically the last entry

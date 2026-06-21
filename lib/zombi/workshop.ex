@@ -86,8 +86,11 @@ defmodule Zombi.Workshop do
   @doc "Installed workshop versions from the SteamCMD manifest: `%{id => timeupdated}`."
   def local_versions do
     case File.read(acf_path()) do
-      {:ok, content} -> {:ok, parse_acf(content)}
-      {:error, reason} -> {:error, "could not read workshop manifest: #{:file.format_error(reason)}"}
+      {:ok, content} ->
+        {:ok, parse_acf(content)}
+
+      {:error, reason} ->
+        {:error, "could not read workshop manifest: #{:file.format_error(reason)}"}
     end
   end
 
@@ -128,6 +131,40 @@ defmodule Zombi.Workshop do
   end
 
   @doc false
+  def parse_mods_line(ini_content) do
+    case Regex.run(~r/^Mods=(.*)$/m, ini_content, capture: :all_but_first) do
+      [list] ->
+        list
+        |> String.split(";", trim: true)
+        |> Enum.map(&String.trim/1)
+        |> Enum.reject(&(&1 == ""))
+
+      nil ->
+        []
+    end
+  end
+
+  @doc """
+  Extracts the numeric published-file id from a Steam Workshop link, or accepts a
+  bare id. Returns `{:ok, id}` or `{:error, reason}`.
+  """
+  def url_to_id(input) when is_binary(input) do
+    trimmed = String.trim(input)
+
+    cond do
+      Regex.match?(~r/^\d+$/, trimmed) ->
+        {:ok, trimmed}
+
+      match = Regex.run(~r/[?&]id=(\d+)/, trimmed, capture: :all_but_first) ->
+        [id] = match
+        {:ok, id}
+
+      true ->
+        {:error, "could not find a workshop id in #{inspect(input)}"}
+    end
+  end
+
+  @doc false
   def parse_acf(acf_content) do
     ~r/"(\d+)"\s*\{[^{}]*?"timeupdated"\s*"(\d+)"/
     |> Regex.scan(acf_content, capture: :all_but_first)
@@ -150,6 +187,7 @@ defmodule Zombi.Workshop do
   defp acf_path,
     do: Path.join(compose_dir(), "server-files/steamapps/workshop/appworkshop_108600.acf")
 
-  defp server_ini_path,
+  @doc "Absolute path to the active server config `.ini`."
+  def server_ini_path,
     do: Path.join(compose_dir(), "server-data/Server/#{server_name()}.ini")
 end

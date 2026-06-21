@@ -50,7 +50,16 @@ config :spark,
 config :zombi,
   ecto_repos: [Zombi.Repo],
   generators: [timestamp_type: :utc_datetime],
-  ash_domains: [Zombi.Stats]
+  ash_domains: [Zombi.Stats, Zombi.Mods, Zombi.Backups]
+
+# Swappable IO behaviours. Defaults are the real (gameserver-host) impls;
+# config/dev.exs and config/test.exs override these with fakes so the app runs
+# off-host. `backups_dir` is resolved relative to :compose_dir at runtime.
+config :zombi,
+  game_server: Zombi.GameServer.Docker,
+  mod_config: Zombi.ModConfig.File,
+  workshop_client: Zombi.WorkshopClient.Steam,
+  backup_runner: Zombi.Backup.Tar
 
 # Configure the endpoint
 config :zombi, ZombiWeb.Endpoint,

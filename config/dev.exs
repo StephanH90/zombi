@@ -1,6 +1,14 @@
 import Config
 config :ash, policies: [show_policy_breakdowns?: true]
 
+# Run against fakes locally — no docker, PZ files, or RCON on a dev machine.
+config :zombi,
+  game_server: Zombi.GameServer.Fake,
+  mod_config: Zombi.ModConfig.Fake,
+  workshop_client: Zombi.WorkshopClient.Fake,
+  backup_runner: Zombi.Backup.Fake,
+  backups_dir: Path.expand("../tmp/backups", __DIR__)
+
 # Configure your database
 config :zombi, Zombi.Repo,
   database: Path.expand("../zombi_dev.db", __DIR__),

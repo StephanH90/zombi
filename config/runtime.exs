@@ -32,6 +32,13 @@ config :zombi, :compose_dir, System.get_env("PZ_COMPOSE_DIR", ".")
 config :zombi, :pz_server_name, System.get_env("PZ_SERVER_NAME", "servertest")
 config :zombi, :pz_container, System.get_env("PZ_CONTAINER", "projectzomboid")
 
+# Where one-click backups are written. Defaults to <compose_dir>/backups.
+# Only used by the real Zombi.Backup.Tar impl; dev/test set this in their config.
+config :zombi,
+       :backups_dir,
+       System.get_env("PZ_BACKUPS_DIR") ||
+         Path.join(System.get_env("PZ_COMPOSE_DIR", "."), "backups")
+
 config :zombi, :rcon,
   host: System.get_env("RCON_HOST", "127.0.0.1"),
   port: String.to_integer(System.get_env("RCON_PORT", "27015")),
