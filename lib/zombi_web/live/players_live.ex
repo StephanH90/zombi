@@ -62,7 +62,7 @@ defmodule ZombiWeb.PlayersLive do
                   <span><span class="font-semibold text-base-content text-base">{p.zombie_kills}</span> kills</span>
                   <span><span class="font-semibold text-base-content text-base">{fmt_hours(p.hours_survived)}</span> h survived</span>
                   <span><span class="font-semibold text-base-content text-base">{fmt_pct(p.health)}</span> health</span>
-                  <span class="text-sm text-base-content/40">seen {fmt_time(p.last_seen_at)}</span>
+                  <span class="text-sm text-base-content/40">seen {local_time(p.last_seen_at, @timezone)}</span>
                 </div>
               </div>
 
@@ -89,7 +89,7 @@ defmodule ZombiWeb.PlayersLive do
             <li :for={e <- @events} class="flex items-center gap-3 p-2 text-sm">
               <span class={["badge badge-sm", event_badge(e.kind)]}>{e.kind}</span>
               <span class="font-medium">{e.username}</span>
-              <span class="text-base-content/50 ml-auto">{fmt_time(e.inserted_at)}</span>
+              <span class="text-base-content/50 ml-auto">{local_time(e.inserted_at, @timezone)}</span>
             </li>
           </ul>
         <% end %>
@@ -108,9 +108,6 @@ defmodule ZombiWeb.PlayersLive do
 
   defp fmt_pct(nil), do: "—"
   defp fmt_pct(v), do: "#{round(v)}%"
-
-  defp fmt_time(nil), do: "—"
-  defp fmt_time(%DateTime{} = dt), do: Calendar.strftime(dt, "%Y-%m-%d %H:%M UTC")
 
   defp latest(values) when is_list(values) and values != [], do: List.last(values)
   defp latest(_), do: nil

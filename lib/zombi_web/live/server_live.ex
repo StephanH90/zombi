@@ -214,7 +214,7 @@ defmodule ZombiWeb.ServerLive do
             {mod.title}
           </a>
           <span class="text-sm text-base-content/60">
-            Updated {Calendar.strftime(mod.updated_at, "%Y-%m-%d %H:%M UTC")} ({relative_time(
+            Updated {local_time(mod.updated_at, @timezone)} ({relative_time(
               mod.behind_seconds
             )} behind)
           </span>

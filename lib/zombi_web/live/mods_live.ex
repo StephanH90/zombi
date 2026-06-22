@@ -464,8 +464,8 @@ defmodule ZombiWeb.ModsLive do
                   {mod.title}
                 </a>
               </td>
-              <td class="whitespace-nowrap">{fmt(mod.installed_at)}</td>
-              <td class="whitespace-nowrap">{fmt(mod.latest_at)}</td>
+              <td class="whitespace-nowrap">{local_time(mod.installed_at, @timezone)}</td>
+              <td class="whitespace-nowrap">{local_time(mod.latest_at, @timezone)}</td>
               <td>
                 <span :if={mod.up_to_date?} class="badge badge-success badge-sm">Up to date</span>
                 <span :if={!mod.up_to_date?} class="badge badge-warning badge-sm">Update available</span>
@@ -477,7 +477,4 @@ defmodule ZombiWeb.ModsLive do
     </div>
     """
   end
-
-  defp fmt(nil), do: "—"
-  defp fmt(%DateTime{} = dt), do: Calendar.strftime(dt, "%Y-%m-%d %H:%M UTC")
 end

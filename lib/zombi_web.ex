@@ -52,6 +52,9 @@ defmodule ZombiWeb do
     quote do
       use Phoenix.LiveView
 
+      # Detect the viewer's time zone and assign @timezone for local_time/2.
+      on_mount ZombiWeb.Format
+
       unquote(html_helpers())
     end
   end
@@ -86,6 +89,8 @@ defmodule ZombiWeb do
       import Phoenix.HTML
       # Core UI components
       import ZombiWeb.CoreComponents
+      # Shared timestamp formatting (local_time/2)
+      import ZombiWeb.Format, only: [local_time: 1, local_time: 2]
 
       # Common modules used in templates
       alias Phoenix.LiveView.JS

@@ -140,7 +140,7 @@ defmodule ZombiWeb.BackupLive do
             <:col :let={b} label="Name">{b.name}</:col>
             <:col :let={b} label="Size">{humanize_bytes(b.size)}</:col>
             <:col :let={b} label="Created">
-              {Calendar.strftime(b.inserted_at, "%Y-%m-%d %H:%M UTC")}
+              {local_time(b.inserted_at, @timezone)}
             </:col>
             <:col :let={b} label="Status">
               <span class={status_badge_class(b.status)}>{status_label(b.status)}</span>
