@@ -212,7 +212,7 @@ defmodule ZombiWeb.ModsLive do
           add_form={@add_form}
         />
 
-        <.mods_table mods={@mods} />
+        <.mods_table mods={@mods} timezone={@timezone} />
       </div>
     </Layouts.app>
     """
@@ -419,6 +419,7 @@ defmodule ZombiWeb.ModsLive do
   # --- steam-update table (kept) ---
 
   attr :mods, :any, required: true
+  attr :timezone, :string, required: true
 
   defp mods_table(%{mods: :loading} = assigns) do
     ~H"""

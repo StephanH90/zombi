@@ -97,7 +97,7 @@ defmodule ZombiWeb.ServerLive do
         </p>
 
         <.player_status players={@players} />
-        <.mod_status mods={@mods} />
+        <.mod_status mods={@mods} timezone={@timezone} />
 
         <button
           id="restart-button"
@@ -167,6 +167,7 @@ defmodule ZombiWeb.ServerLive do
   # --- mod status ---
 
   attr :mods, :any, required: true
+  attr :timezone, :string, required: true
 
   defp mod_status(%{mods: :loading} = assigns) do
     ~H"""
